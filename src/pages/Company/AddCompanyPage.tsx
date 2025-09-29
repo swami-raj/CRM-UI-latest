@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { Save, RotateCcw, User, Mail, Phone, MapPin } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 interface CompanyFormData {
   id: number;
   name: string;
@@ -13,6 +13,7 @@ interface CompanyFormData {
 }
 
 const AddCompanyPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<CompanyFormData>({
     id: 0,
     name: "",
@@ -56,6 +57,7 @@ const AddCompanyPage = () => {
       if (response.data.code === 1 || response.data.code === 200) {
         toast.success(response.data.message || "Company added successfully!");
         resetForm();
+        navigate('/home/company/show')
       } else {
         toast.error(response.data.message || "Failed to add company");
       }

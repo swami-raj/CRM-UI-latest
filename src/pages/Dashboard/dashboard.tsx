@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Outlet, Link } from "react-router-dom";
-import { ChevronDown, Menu, X, User, LogOut, Shield, Bell } from "lucide-react";
+import { ChevronDown, Menu, X, User, LogOut, Shield} from "lucide-react";
 
 interface SubMenu {
   id: number;

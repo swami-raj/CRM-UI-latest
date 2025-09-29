@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Add this import
-import { User, Briefcase, Menu, Plus, Users, Building, Settings, Shield, TrendingUp, Clock, Activity, Eye, CheckCircle, XCircle, PlayCircle, PauseCircle, AlertCircle } from "lucide-react";
+import { Briefcase, Activity, CheckCircle, XCircle, PlayCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -37,6 +37,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTickets }) =>
         setMenuCount(user?.menulist?.length || 0);
       } catch (error) {
         console.error("Error parsing user data:", error);
+        console.log(userName,userEmail, menuCount)
       }
     }
     
@@ -124,7 +125,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTickets }) =>
             {Object.entries(data).map(([status, count]) => {
               if (count === 0) return null;
               
-              const percentage = (count / total) * 100;
+              
               const angle = (count / total) * 360;
               const startAngle = currentAngle;
               const endAngle = currentAngle + angle;

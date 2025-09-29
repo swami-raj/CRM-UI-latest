@@ -110,7 +110,7 @@ const AddCandidatePage = () => {
         
         console.log("User data fetched:", user); // Debug log
         setUserData(user);
-        
+        console.log(userData)
         // Store user data in sessionStorage for future use
         sessionStorage.setItem("userData", JSON.stringify(user));
       } else {

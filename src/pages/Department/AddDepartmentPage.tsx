@@ -3,8 +3,10 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { Plus, Save, RotateCcw, Briefcase } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AddDepartmentPage = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +34,7 @@ const AddDepartmentPage = () => {
       if (response.data.code === 200 || response.data.code === 1) {
         toast.success("Department added successfully!");
         resetForm();
+        navigate("/home/department/show");
       } else {
         toast.error(response.data.message || "Failed to add department");
       }

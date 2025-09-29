@@ -3,8 +3,10 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { Plus, Save, RotateCcw, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AddRolePage = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +34,7 @@ const AddRolePage = () => {
       if (response.data.code === 200 || response.data.code === 1) {
         toast.success("Role added successfully!");
         resetForm();
+        navigate("/home/role/show");
       } else {
         toast.error(response.data.message || "Failed to add role");
       }
