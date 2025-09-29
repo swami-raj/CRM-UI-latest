@@ -244,11 +244,11 @@ const AddCandidatePage = () => {
   // Bulk Upload handler - available for all users
   const handleBulkUpload = async (file: File) => {
     // Validate file type
-    const allowedTypes = ['.csv', '.xlsx'];
+    const allowedTypes = ['.xlsx'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
     if (!allowedTypes.includes(fileExtension)) {
-      toast.error("Only CSV and XLSX files are allowed for bulk upload");
+      toast.error("Only XLSX files are allowed for bulk upload");
       return;
     }
 
@@ -257,7 +257,7 @@ const AddCandidatePage = () => {
     
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("candidatesFile", file);
 
       // Using the API_BASE endpoint
       const res = await axios.post(`${API_BASE}/import/candidates`, formData, {
