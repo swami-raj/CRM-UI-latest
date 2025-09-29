@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
@@ -17,6 +17,14 @@ interface User {
   companyName: string | null;
 }
 
+interface UserData {
+  id?: number;
+  departmentId: number;
+  departmentName?: string;
+  name: string;
+  email?: string;
+}
+
 const ShowUserPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +32,111 @@ const ShowUserPage = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [viewModal, setViewModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  // Check if current user is Super Admin (departmentId === 1)
+  const isSuperAdmin = userData?.departmentId === 1;
+
+  // Helper function to get user ID from token
+  const getUserIdFromToken = (): number | null => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) return null;
+
+      const cleanToken = token.replace('Bearer ', '');
+      const payload = JSON.parse(atob(cleanToken.split('.')[1]));
+      
+      // Check different possible locations for user ID in the token
+      if (payload.UserAuthDetails && payload.UserAuthDetails.id) {
+        return payload.UserAuthDetails.id;
+      }
+      if (payload.id) {
+        return payload.id;
+      }
+      if (payload.userId) {
+        return payload.userId;
+      }
+      if (payload.sub) {
+        return parseInt(payload.sub);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error decoding token for user ID:", error);
+      return null;
+    }
+  };
+
+  // Fetch current user data
+  const fetchUserData = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      // Get user ID from token
+      const userId = getUserIdFromToken();
+      if (!userId) {
+        toast.error("Unable to get user ID from token");
+        return;
+      }
+
+      console.log("Fetching user data for ID:", userId); // Debug log
+
+      // Fetch current user data using the extracted user ID
+      const res = await axios.get(`${API_BASE}/auth/getById/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (res.data.code === 1 && res.data.data) {
+        const user = {
+          id: res.data.data.id,
+          departmentId: res.data.data.departmentId,
+          departmentName: res.data.data.departmentName,
+          name: res.data.data.name,
+          email: res.data.data.email
+        };
+        
+        console.log("User data fetched:", user); // Debug log
+        setUserData(user);
+        
+        // Store user data in sessionStorage for future use
+        sessionStorage.setItem("userData", JSON.stringify(user));
+      } else {
+        toast.error("Failed to fetch user data");
+      }
+    } catch (error: any) {
+      console.error("Error fetching user data:", error);
+      toast.error(error?.response?.data?.message || "Failed to fetch user data");
+    }
+  };
+
+  // Get user data on component mount
+  useEffect(() => {
+    const initializeUserData = async () => {
+      // Try to get user data from sessionStorage first
+      const storedUserData = sessionStorage.getItem("userData");
+      if (storedUserData) {
+        try {
+          const parsedUserData = JSON.parse(storedUserData);
+          console.log("Using stored user data:", parsedUserData);
+          setUserData(parsedUserData);
+          return;
+        } catch (error) {
+          console.error("Error parsing stored user data:", error);
+          // Remove corrupted data
+          sessionStorage.removeItem("userData");
+        }
+      }
+
+      // If no valid stored user data, fetch from API
+      await fetchUserData();
+    };
+
+    initializeUserData();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -129,15 +242,18 @@ const ShowUserPage = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                {isSuperAdmin && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={isSuperAdmin ? 8 : 7} className="px-6 py-12 text-center text-gray-500">
                     <i className="fas fa-users text-4xl mb-4 text-gray-300"></i>
                     <p className="text-lg">No users found</p>
                   </td>
@@ -154,8 +270,11 @@ const ShowUserPage = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{user.phone}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{user.companyName || `ID: ${user.companyId}`}</td>
+                    {isSuperAdmin && (
+                      <td className="px-6 py-4 text-sm text-gray-900">{user.companyName || `ID: ${user.companyId}`}</td>
+                    )}
                     <td className="px-6 py-4 text-sm text-gray-900">{user.departmentName || `ID: ${user.departmentId}`}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{user.roleName || "N/A"}</td>
                     <td className="px-6 py-4 text-sm text-right flex space-x-3 justify-end">
                       <button onClick={() => viewUser(user.id)} className="text-blue-600 hover:text-blue-900">
                         <i className="fas fa-eye"></i>
@@ -177,9 +296,11 @@ const ShowUserPage = () => {
             <div className="space-y-3">
               <p><span className="font-semibold">Email:</span> {selectedUser.email}</p>
               <p><span className="font-semibold">Phone:</span> {selectedUser.phone}</p>
-              <p><span className="font-semibold">Company:</span> {selectedUser.companyName || `ID: ${selectedUser.companyId}`}</p>
+              {isSuperAdmin && (
+                <p><span className="font-semibold">Company:</span> {selectedUser.companyName || `ID: ${selectedUser.companyId}`}</p>
+              )}
               <p><span className="font-semibold">Department:</span> {selectedUser.departmentName || `ID: ${selectedUser.departmentId}`}</p>
-              <p><span className="font-semibold">Role:</span> {selectedUser.roleName || `ID: ${selectedUser.roleId}`}</p>
+              <p><span className="font-semibold">Role:</span> {selectedUser.roleName || "N/A"}</p>
             </div>
             <div className="mt-4 flex justify-end">
               <button onClick={() => setViewModal(false)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Close</button>

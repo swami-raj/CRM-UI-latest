@@ -317,6 +317,11 @@ const ShowTicketPage = () => {
     setCurrentPage(1);
   }, [search, entriesPerPage, statusFilter]);
 
+  const handleRefresh = ()=>{
+    fetchTickets();
+    toast.success("Tickets Refreshed!")
+  }
+
   // Handle entries per page change
   const handleEntriesPerPageChange = (value: string) => {
     const numValue = value === "all" ? -1 : parseInt(value);
@@ -368,12 +373,12 @@ const ShowTicketPage = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 max-w-md border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             />
-            <button
-              onClick={fetchTickets}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              <i className="fas fa-sync"></i>
-            </button>
+           <button
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+          >
+            <i className="fas fa-sync-alt"></i> Refresh
+          </button>
             
             {/* Status Filter Button */}
             <div className="relative z-30">
@@ -692,6 +697,16 @@ const ShowTicketPage = () => {
         {assignModal && (
           <Modal title="Assign Tickets to User" onClose={() => setAssignModal(false)} size="xl">
             <div className="space-y-4">
+              {/* Search Bar for Modal Table */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Search tickets in table..."
+                  value={modalSearch}
+                  onChange={(e) => setModalSearch(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
               {/* User Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select User</label>
@@ -709,16 +724,7 @@ const ShowTicketPage = () => {
                 </select>
               </div>
 
-              {/* Search Bar for Modal Table */}
-              <div>
-                <input
-                  type="text"
-                  placeholder="Search tickets in table..."
-                  value={modalSearch}
-                  onChange={(e) => setModalSearch(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              
 
               {/* Ticket Selection Controls */}
               <div className="flex items-center justify-between">
@@ -751,7 +757,7 @@ const ShowTicketPage = () => {
               </div>
 
               {/* Tickets Table in Modal */}
-              <div className="max-h-96 overflow-auto border rounded">
+              <div className="max-h-70 overflow-auto border rounded">
                 <table className="w-full border-collapse">
                   <thead className="bg-gray-100 sticky top-0">
                     <tr className="text-center">

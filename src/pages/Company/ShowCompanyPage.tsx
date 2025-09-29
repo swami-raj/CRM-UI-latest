@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
 
 interface Company {
   id: number;
@@ -15,7 +15,7 @@ interface Company {
 }
 
 const ShowCompanyPage = () => {
-  const navigate = useNavigate();
+  
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -87,6 +87,10 @@ const ShowCompanyPage = () => {
       setSelectedCompany(null);
     }
   };
+  const handleRefresh = () => {
+    fetchCompanies();
+    toast.success("Company refreshed!");
+  };
 
   if (loading) {
     return (
@@ -115,11 +119,11 @@ const ShowCompanyPage = () => {
               className="px-4 py-2 border rounded-lg flex-1"
             />
             <button
-              onClick={() => navigate("/home/company/add")}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-            >
-              <i className="fas fa-plus mr-2"></i> Add
-            </button>
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+          >
+            <i className="fas fa-sync-alt"></i> Refresh
+          </button>
           </div>
         </div>
 
