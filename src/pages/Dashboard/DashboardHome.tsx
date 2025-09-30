@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Activity, CheckCircle, XCircle, PlayCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
+import { API_BASE } from "../../utils/api";
 import { toast } from "react-hot-toast";
 
 interface DashboardHomeProps {
@@ -48,7 +49,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTickets }) =>
     try {
       setLoading(true);
       const token = sessionStorage.getItem("token");
-      const res = await axios.get("http://13.127.232.90:8081/ticket/ticket-status-count", {
+      const res = await axios.get(`${API_BASE}/ticket/ticket-status-count`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.code === 1) {
@@ -74,8 +75,9 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTickets }) =>
     }
   };
 
-  // Simplified Donut Chart Component - uses ticketStatusData directly
-  // Donut Chart Component - Simplified and Reliable
+ 
+  
+// Donut Chart Component - Fixed to show small segments
 const DonutChart = ({ data }: { data: Record<string, number> }) => {
   const total = Object.values(data).reduce((sum, count) => sum + count, 0);
   
@@ -101,19 +103,20 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
     COMPLETED: '#10b981'
   };
 
-  // Create segments for non-zero values
-  const segments = Object.entries(data)
-    .filter(([_, count]) => count > 0)
-    .map(([status, count]) => ({
+  // Create segments for non-zero values, maintaining status order
+  const statusOrder = ['OPEN', 'PENDING', 'INPROGRESS', 'CLOSED', 'COMPLETED'];
+  const segments = statusOrder
+    .filter(status => data[status] > 0)
+    .map(status => ({
       status,
-      count,
-      percentage: (count / total) * 100,
+      count: data[status],
+      percentage: (data[status] / total) * 100,
       color: colors[status]
     }));
 
-  // SVG donut parameters
-  const size = 240;
-  const strokeWidth = 30;
+  // SVG donut parameters - increased size for better visibility
+  const size = 280;
+  const strokeWidth = 35;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -135,9 +138,12 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
           
           {/* Colored segments */}
           {segments.map((segment) => {
-            const dashArray = (segment.percentage / 100) * circumference;
+            // Ensure minimum visible size for very small segments
+            const minVisiblePercentage = 0.5; // minimum 0.5% visibility
+            const displayPercentage = Math.max(segment.percentage, minVisiblePercentage);
+            const dashArray = (displayPercentage / 100) * circumference;
             const dashOffset = -accumulatedPercentage * circumference / 100;
-            accumulatedPercentage += segment.percentage;
+            accumulatedPercentage += segment.percentage; // Use actual percentage for positioning
 
             return (
               <circle
@@ -153,7 +159,7 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
                 className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
                 onClick={() => handleCardClick(segment.status)}
                 style={{ 
-                  strokeLinecap: 'round',
+                  strokeLinecap: 'butt', // Changed from 'round' to 'butt' for better small segment visibility
                   transition: 'all 0.3s ease'
                 }}
               />
@@ -172,7 +178,6 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
     </div>
   );
 };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'COMPLETED':
@@ -226,14 +231,7 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
 
   return (
     <div className="space-y-8 relative">
-      {/* Dynamic background with floating elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
-      </div>
-
-      {/* Hero Welcome Section with Donut Chart */}
+      
       <div className="relative bg-gradient-to-br from-white/90 to-blue-50/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-12 overflow-hidden group">
         {/* Animated background patterns */}
         <div className="absolute inset-0 opacity-10">
@@ -252,35 +250,15 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
           ))}
         </div>
 
+        
+
         <div className="relative z-10 text-center">
-          {/* Donut Chart */}
-          <div className="mb-8">
-            {loading ? (
-              <div className="flex items-center justify-center w-64 h-64 mx-auto">
-                <div className="text-gray-500 text-center">
-                  <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-2 animate-pulse"></div>
-                  <p>Loading ticket data...</p>
-                </div>
-              </div>
-            ) : (
-              <DonutChart data={ticketStatusData} />
-            )}
-          </div>
-          
-          <h2 className="text-5xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-4 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-500">
+        <h2 className="text-5xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-4 group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-500">
             Ticket Overview
           </h2>
-          
-          <div className="inline-flex items-center space-x-2 bg-white/60 backdrop-blur-sm px-6 py-3 rounded-full border border-blue-200/50 mb-4">
-            <Briefcase className="w-5 h-5 text-blue-600" />
-            <span className="text-lg font-semibold text-slate-700">
-              {departmentName} Division
-            </span>
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          </div>
-
+        
           {/* Ticket Status Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 pt-6">
             {statusOrder.map((status) => {
               const count = ticketStatusData[status as keyof typeof ticketStatusData];
               return (
@@ -324,6 +302,19 @@ const DonutChart = ({ data }: { data: Record<string, number> }) => {
                 </div>
               );
             })}
+          </div>
+          {/* Donut Chart */}
+          <div className="mt-16">
+            {loading ? (
+              <div className="flex items-center justify-center w-64 h-64 mx-auto">
+                <div className="text-gray-500 text-center">
+                  <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto mb-2 animate-pulse"></div>
+                  <p>Loading ticket data...</p>
+                </div>
+              </div>
+            ) : (
+              <DonutChart data={ticketStatusData} />
+            )}
           </div>
         </div>
       </div>
