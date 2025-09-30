@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Activity, CheckCircle, XCircle, PlayCircle, AlertCircle } from "lucide-react";
+import { Activity, CheckCircle, XCircle, PlayCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
 import { API_BASE } from "../../utils/api";
 import { toast } from "react-hot-toast";
@@ -38,7 +38,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateToTickets }) =>
         setMenuCount(user?.menulist?.length || 0);
       } catch (error) {
         console.error("Error parsing user data:", error);
-        console.log(userName, userEmail, menuCount)
+        console.log(userName, userEmail, menuCount, departmentName, )
       }
     }
     

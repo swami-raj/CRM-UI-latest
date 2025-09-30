@@ -114,14 +114,12 @@ const ShowTicketPage = () => {
           email: res.data.data.email
         };
         
-        console.log("User data fetched:", user); // Debug log
+        
         setUserData(user);
         
         // Store user data in sessionStorage for future use
         sessionStorage.setItem("userData", JSON.stringify(user));
-      } else {
-        toast.error("Failed to fetch user data");
-      }
+      } 
     } catch (error: any) {
       console.error("Error fetching user data:", error);
       toast.error(error?.response?.data?.message || "Failed to fetch user data");
@@ -197,7 +195,7 @@ const ShowTicketPage = () => {
   const fetchUsers = async () => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await axios.get("http://13.127.232.90:8081/auth/get-all", {
+      const res = await axios.get(`${API_BASE}/auth/get-all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.code === 1) setUsers(res.data.data);
@@ -244,7 +242,7 @@ const ShowTicketPage = () => {
   const fetchAssignHistory = async (ticketId: number) => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await axios.get(`http://13.127.232.90:8081/status/assign-history/${ticketId}`, {
+      const res = await axios.get(`${API_BASE}/status/assign-history/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.code === 1) {
@@ -472,7 +470,7 @@ const ShowTicketPage = () => {
     if (!showFilterDropdown && filterButtonRef.current) {
       const rect = filterButtonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 4, // +4px gap
+        top: rect.bottom + window.scrollY + 4, 
         left: rect.left + window.scrollX,
       });
     }
