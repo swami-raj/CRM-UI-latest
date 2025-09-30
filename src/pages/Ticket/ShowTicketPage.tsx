@@ -140,7 +140,7 @@ const ShowTicketPage = () => {
           ...prev,
           [ticketId]: res.data.data || []
         }));
-      } else toast.error(res.data.message || "Failed to fetch assign history");
+      } 
     } catch {
       toast.error("Error fetching assign history");
     }
