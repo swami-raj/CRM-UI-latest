@@ -19,6 +19,9 @@ const ShowTicketPage = () => {
   const [ticketLogHistory, setTicketLogHistory] = useState<{[key: number]: any[]}>({});
   const [ticketAssignHistory, setTicketAssignHistory] = useState<{[key: number]: any[]}>({});
   
+  // User data for role-based access control
+  const [userData, setUserData] = useState<any>(null);
+  
   // Filter state - Initialize from URL parameter
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -42,6 +45,111 @@ const ShowTicketPage = () => {
     status: "",
     nextFollowUpDate: "",
   });
+
+  // Check if user has delete permission (Super Admin or Admin only)
+  const hasDeletePermission = userData?.departmentId === 1 || userData?.departmentId === 2;
+
+  // Helper function to get user ID from token
+  const getUserIdFromToken = (): number | null => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) return null;
+
+      const cleanToken = token.replace('Bearer ', '');
+      const payload = JSON.parse(atob(cleanToken.split('.')[1]));
+      
+      // Check different possible locations for user ID in the token
+      if (payload.UserAuthDetails && payload.UserAuthDetails.id) {
+        return payload.UserAuthDetails.id;
+      }
+      if (payload.id) {
+        return payload.id;
+      }
+      if (payload.userId) {
+        return payload.userId;
+      }
+      if (payload.sub) {
+        return parseInt(payload.sub);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error decoding token for user ID:", error);
+      return null;
+    }
+  };
+
+  // Fetch current user data
+  const fetchUserData = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      // Get user ID from token
+      const userId = getUserIdFromToken();
+      if (!userId) {
+        toast.error("Unable to get user ID from token");
+        return;
+      }
+
+      console.log("Fetching user data for ID:", userId); // Debug log
+
+      // Fetch current user data using the extracted user ID
+      const res = await axios.get(`${API_BASE}/auth/getById/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (res.data.code === 1 && res.data.data) {
+        const user = {
+          id: res.data.data.id,
+          departmentId: res.data.data.departmentId,
+          departmentName: res.data.data.departmentName,
+          name: res.data.data.name,
+          email: res.data.data.email
+        };
+        
+        console.log("User data fetched:", user); // Debug log
+        setUserData(user);
+        
+        // Store user data in sessionStorage for future use
+        sessionStorage.setItem("userData", JSON.stringify(user));
+      } else {
+        toast.error("Failed to fetch user data");
+      }
+    } catch (error: any) {
+      console.error("Error fetching user data:", error);
+      toast.error(error?.response?.data?.message || "Failed to fetch user data");
+    }
+  };
+
+  // Get user data on component mount
+  useEffect(() => {
+    const initializeUserData = async () => {
+      // Try to get user data from sessionStorage first
+      const storedUserData = sessionStorage.getItem("userData");
+      if (storedUserData) {
+        try {
+          const parsedUserData = JSON.parse(storedUserData);
+          console.log("Using stored user data:", parsedUserData);
+          setUserData(parsedUserData);
+        } catch (error) {
+          console.error("Error parsing stored user data:", error);
+          // Remove corrupted data
+          sessionStorage.removeItem("userData");
+          // Fetch from API
+          await fetchUserData();
+        }
+      } else {
+        // If no valid stored user data, fetch from API
+        await fetchUserData();
+      }
+    };
+
+    initializeUserData();
+  }, []);
 
   useEffect(() => {
     // Read status filter from URL parameter and set it
@@ -538,12 +646,15 @@ const ShowTicketPage = () => {
                           <button onClick={() => handleEdit(ticket)} className="text-green-600 hover:text-green-800">
                             <i className="fas fa-edit"></i>
                           </button>
-                          <button
-                            onClick={() => { setSelectedTicket(ticket); setDeleteModal(true); }}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
+                          {/* Only show delete button for ADMIN (departmentId 2) and SUPERADMIN (departmentId 1) */}
+                          {hasDeletePermission && (
+                            <button
+                              onClick={() => { setSelectedTicket(ticket); setDeleteModal(true); }}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          )}
                         </td>
                         <td className="p-2 border">
                           <button

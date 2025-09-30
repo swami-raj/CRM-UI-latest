@@ -336,7 +336,7 @@ const ShowCandidatePage = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        responseType: 'blob', // Important for downloading files
+        responseType: 'blob', 
       });
 
       // Create blob link to download
