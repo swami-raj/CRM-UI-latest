@@ -5,6 +5,8 @@ import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { X, ChevronDown, ChevronRight, Filter, ChevronLeft } from "lucide-react";
 import { ScrollToTop } from "../../component/ScrollToTop";
+import { createPortal } from "react-dom";
+
 
 const ShowTicketPage = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +20,7 @@ const ShowTicketPage = () => {
   const [expandedTickets, setExpandedTickets] = useState<Set<number>>(new Set());
   const [ticketLogHistory, setTicketLogHistory] = useState<{[key: number]: any[]}>({});
   const [ticketAssignHistory, setTicketAssignHistory] = useState<{[key: number]: any[]}>({});
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   
   // User data for role-based access control
   const [userData, setUserData] = useState<any>(null);
@@ -466,6 +469,17 @@ const ShowTicketPage = () => {
     }
   };
 
+  const toggleDropdown = () => {
+    if (!showFilterDropdown && filterButtonRef.current) {
+      const rect = filterButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4, // +4px gap
+        left: rect.left + window.scrollX,
+      });
+    }
+    setShowFilterDropdown(!showFilterDropdown);
+  };
+
   const statusOptions = ["ALL", "OPEN", "INPROGRESS", "ONHOLD", "CLOSE", "COMPLETED"];
 
   return (
@@ -499,45 +513,54 @@ const ShowTicketPage = () => {
           </button>
             
             {/* Status Filter Button */}
-            <div className="relative">
-              <button
-                ref={filterButtonRef}
-                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                className="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 flex items-center space-x-2"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filter: {statusFilter}</span>
-              </button>
+<div className="relative">
+  <button
+    ref={filterButtonRef}
+    onClick={toggleDropdown}
+    className="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 flex items-center space-x-2"
+  >
+    <Filter className="w-4 h-4" />
+    <span>Filter: {statusFilter}</span>
+  </button>
 
-              {/* Filter Dropdown - Positioned relative to button */}
-              {showFilterDropdown && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setShowFilterDropdown(false)}
-                  />
-                  <div 
-                    className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg min-w-[150px] z-50"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {statusOptions.map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => {
-                          setStatusFilter(status);
-                          setShowFilterDropdown(false);
-                        }}
-                        className={`block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                          statusFilter === status ? 'bg-blue-50 text-blue-600' : ''
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+  {showFilterDropdown &&
+    createPortal(
+      <>
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 z-[9998]"
+          onClick={() => setShowFilterDropdown(false)}
+        />
+        {/* Dropdown */}
+        <div
+          className="absolute bg-white border rounded-lg shadow-lg min-w-[150px] z-[9999]"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            position: "absolute",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {statusOptions.map((status) => (
+            <button
+              key={status}
+              onClick={() => {
+                setStatusFilter(status);
+                setShowFilterDropdown(false);
+              }}
+              className={`block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                statusFilter === status ? "bg-blue-50 text-blue-600" : ""
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+      </>,
+      document.body
+    )}
+</div>
+
           </div>
           
           <button
