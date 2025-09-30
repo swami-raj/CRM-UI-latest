@@ -480,7 +480,7 @@ const ShowTicketPage = () => {
     setShowFilterDropdown(!showFilterDropdown);
   };
 
-  const statusOptions = ["ALL", "OPEN", "INPROGRESS", "ONHOLD", "CLOSE", "COMPLETED"];
+  const statusOptions = ["ALL", "OPEN", "INPROGRESS", "PENDING", "CLOSE", "COMPLETED"];
 
   return (
     <div className="p-4 min-h-screen bg-gray-50">
@@ -651,7 +651,7 @@ const ShowTicketPage = () => {
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
                             ticket.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
                             ticket.status === 'INPROGRESS' ? 'bg-yellow-100 text-yellow-800' :
-                            ticket.status === 'ONHOLD' ? 'bg-orange-100 text-orange-800' :
+                            ticket.status === 'PENDING' ? 'bg-orange-100 text-orange-800' :
                             ticket.status === 'CLOSE' ? 'bg-gray-100 text-gray-800' :
                             ticket.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                             'bg-gray-100 text-gray-800'
@@ -711,7 +711,7 @@ const ShowTicketPage = () => {
                                               Status: <span className={`px-2 py-1 rounded text-xs ${
                                                 log.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
                                                 log.status === 'INPROGRESS' ? 'bg-yellow-100 text-yellow-800' :
-                                                log.status === 'ONHOLD' ? 'bg-orange-100 text-orange-800' :
+                                                log.status === 'PENDING' ? 'bg-orange-100 text-orange-800' :
                                                 log.status === 'ClOSED' ? 'bg-gray-100 text-gray-800' :
                                                 log.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                                                 'bg-gray-100 text-gray-800'
@@ -971,7 +971,7 @@ const ShowTicketPage = () => {
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
                               ticket.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
                               ticket.status === 'INPROGRESS' ? 'bg-yellow-100 text-yellow-800' :
-                              ticket.status === 'ONHOLD' ? 'bg-orange-100 text-orange-800' :
+                              ticket.status === 'PENDING' ? 'bg-orange-100 text-orange-800' :
                               ticket.status === 'CLOSE' ? 'bg-gray-100 text-gray-800' :
                               ticket.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                               'bg-gray-100 text-gray-800'
@@ -1036,7 +1036,7 @@ const ShowTicketPage = () => {
                 <option value="">Select Status</option>
                 <option value="OPEN">OPEN</option>
                 <option value="INPROGRESS">INPROGRESS</option>
-                <option value="ONHOLD">ONHOLD</option>
+                <option value="PENDING">PENDING</option>
                 <option value="CLOSED">CLOSED</option>
                 <option value="COMPLETED">COMPLETED</option>
               </select>
