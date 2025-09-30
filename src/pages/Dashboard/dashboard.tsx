@@ -51,10 +51,13 @@ const Dashboard = () => {
 
   const handleMenuClick = (menu: Menu) => {
     if (menu.submenulist && menu.submenulist.length > 0) {
-      setExpandedMenus((prev) => ({
-        ...prev,
-        [menu.id]: !prev[menu.id],
-      }));
+      setExpandedMenus((prev) => {
+        const isCurrentlyExpanded = prev[menu.id];
+        // Close all menus and toggle only the clicked one
+        return {
+          [menu.id]: !isCurrentlyExpanded,
+        };
+      });
     } else {
       navigate(`/home/${menu.url}`);
     }
