@@ -18,6 +18,7 @@ import {
   Upload,
   Download,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface UserData {
   id?: number;
@@ -28,6 +29,7 @@ interface UserData {
 }
 
 const AddCandidatePage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -269,6 +271,7 @@ const AddCandidatePage = () => {
 
       if (res.data.code === 1) {
         toast.success(res.data.message || "Bulk upload successful!");
+        navigate("/home/candidate/show")
       } else {
         toast.error(res.data.message || "Bulk upload failed");
       }

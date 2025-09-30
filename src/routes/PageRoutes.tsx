@@ -29,7 +29,7 @@ const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
-  // ✅ Always refresh OpenAPI token with Bearer prefix
+  
   setAuthToken(token);
 
   return children;

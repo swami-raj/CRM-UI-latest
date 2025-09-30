@@ -16,12 +16,12 @@ const ShowTicketPage = () => {
   const [assignModal, setAssignModal] = useState(false);
   const [expandedTickets, setExpandedTickets] = useState<Set<number>>(new Set());
   const [ticketLogHistory, setTicketLogHistory] = useState<{[key: number]: any[]}>({});
+  const [ticketAssignHistory, setTicketAssignHistory] = useState<{[key: number]: any[]}>({});
   
   // Filter state - Initialize from URL parameter
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,17 +65,6 @@ const ShowTicketPage = () => {
       document.body.style.overflow = 'unset';
     };
   }, [assignModal, editModal, deleteModal]);
-
-  // Update dropdown position when it opens
-  useEffect(() => {
-    if (showFilterDropdown && filterButtonRef.current) {
-      const rect = filterButtonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX
-      });
-    }
-  }, [showFilterDropdown]);
 
   const fetchTickets = async () => {
     try {
@@ -140,6 +129,23 @@ const ShowTicketPage = () => {
     }
   };
 
+  const fetchAssignHistory = async (ticketId: number) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`http://13.127.232.90:8081/status/assign-history/${ticketId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.code === 1) {
+        setTicketAssignHistory(prev => ({
+          ...prev,
+          [ticketId]: res.data.data || []
+        }));
+      } else toast.error(res.data.message || "Failed to fetch assign history");
+    } catch {
+      toast.error("Error fetching assign history");
+    }
+  };
+
   const toggleRowExpansion = async (ticket: any) => {
     const isExpanded = expandedTickets.has(ticket.id);
     const newExpanded = new Set(expandedTickets);
@@ -150,6 +156,9 @@ const ShowTicketPage = () => {
       newExpanded.add(ticket.id);
       if (!ticketLogHistory[ticket.id]) {
         await fetchLogHistory(ticket.id);
+      }
+      if (!ticketAssignHistory[ticket.id]) {
+        await fetchAssignHistory(ticket.id);
       }
     }
     
@@ -257,7 +266,7 @@ const ShowTicketPage = () => {
         candidateIds: candidateIds
       };
 
-      const res = await axios.post("http://13.127.232.90:8081/status/assign", assignmentData, {
+      const res = await axios.post(`${API_BASE}/status/assign`, assignmentData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
 
@@ -381,7 +390,7 @@ const ShowTicketPage = () => {
           </button>
             
             {/* Status Filter Button */}
-            <div className="relative z-30">
+            <div className="relative">
               <button
                 ref={filterButtonRef}
                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
@@ -390,6 +399,35 @@ const ShowTicketPage = () => {
                 <Filter className="w-4 h-4" />
                 <span>Filter: {statusFilter}</span>
               </button>
+
+              {/* Filter Dropdown - Positioned relative to button */}
+              {showFilterDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowFilterDropdown(false)}
+                  />
+                  <div 
+                    className="absolute top-full mt-1 left-0 bg-white border rounded-lg shadow-lg min-w-[150px] z-50"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {statusOptions.map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          setStatusFilter(status);
+                          setShowFilterDropdown(false);
+                        }}
+                        className={`block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                          statusFilter === status ? 'bg-blue-50 text-blue-600' : ''
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
           
@@ -414,38 +452,6 @@ const ShowTicketPage = () => {
                 Clear filter
               </button>
             </p>
-          </div>
-        )}
-
-        {/* Filter Dropdown Portal - Rendered outside overflow container */}
-        {showFilterDropdown && (
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setShowFilterDropdown(false)}
-          >
-            <div 
-              className="absolute bg-white border rounded-lg shadow-lg min-w-[150px]"
-              style={{
-                top: `${dropdownPosition.top}px`,
-                left: `${dropdownPosition.left}px`,
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {statusOptions.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => {
-                    setStatusFilter(status);
-                    setShowFilterDropdown(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                    statusFilter === status ? 'bg-blue-50 text-blue-600' : ''
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
           </div>
         )}
 
@@ -552,38 +558,68 @@ const ShowTicketPage = () => {
                         </td>
                       </tr>
                       
-                      {/* Expanded log history row */}
+                      {/* Expanded log history and assign history row */}
                       {expandedTickets.has(ticket.id) && (
                         <tr key={`${ticket.id}-expanded`} className="bg-gray-50">
                           <td colSpan={8} className="p-0 border-b">
                             <div className="p-4 bg-blue-50">
-                              <h4 className="font-semibold text-gray-800 mb-3">Log History</h4>
-                              {ticketLogHistory[ticket.id]?.length ? (
-                                <div className="space-y-3">
-                                  {ticketLogHistory[ticket.id].map((log, idx) => (
-                                    <div key={idx} className="p-3 border-l-4 border-blue-600 bg-white rounded-r shadow-sm">
-                                      <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                          <p className="text-sm font-medium text-gray-900">
-                                            Status: <span className={`px-2 py-1 rounded text-xs ${
-                                              log.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
-                                              log.status === 'INPROGRESS' ? 'bg-yellow-100 text-yellow-800' :
-                                              log.status === 'ONHOLD' ? 'bg-orange-100 text-orange-800' :
-                                              log.status === 'ClOSED' ? 'bg-gray-100 text-gray-800' :
-                                              log.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                              'bg-gray-100 text-gray-800'
-                                            }`}>{log.status}</span>
-                                          </p>
-                                          <p className="text-gray-800 mt-2">{log.remarks}</p>
-                                          <p className="text-sm text-gray-500 mt-1">Next Follow Up: {log.nextFollowUpDate}</p>
+                              {/* Log History Section */}
+                              <div className="mb-6">
+                                <h4 className="font-semibold text-gray-800 mb-3">Log History</h4>
+                                {ticketLogHistory[ticket.id]?.length ? (
+                                  <div className="space-y-3">
+                                    {ticketLogHistory[ticket.id].map((log, idx) => (
+                                      <div key={idx} className="p-3 border-l-4 border-blue-600 bg-white rounded-r shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-gray-900">
+                                              Status: <span className={`px-2 py-1 rounded text-xs ${
+                                                log.status === 'OPEN' ? 'bg-blue-100 text-blue-800' :
+                                                log.status === 'INPROGRESS' ? 'bg-yellow-100 text-yellow-800' :
+                                                log.status === 'ONHOLD' ? 'bg-orange-100 text-orange-800' :
+                                                log.status === 'ClOSED' ? 'bg-gray-100 text-gray-800' :
+                                                log.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                                'bg-gray-100 text-gray-800'
+                                              }`}>{log.status}</span>
+                                            </p>
+                                            <p className="text-gray-800 mt-2">{log.remarks}</p>
+                                            <p className="text-sm text-gray-500 mt-1">Next Follow Up: {log.nextFollowUpDate}</p>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-gray-500">No log history found.</p>
-                              )}
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500">No log history found.</p>
+                                )}
+                              </div>
+
+                              {/* Assign History Section */}
+                              <div>
+                                <h4 className="font-semibold text-gray-800 mb-3">Assign History</h4>
+                                {ticketAssignHistory[ticket.id]?.length ? (
+                                  <div className="space-y-3">
+                                    {ticketAssignHistory[ticket.id].map((assign, idx) => (
+                                      <div key={idx} className="p-3 border-l-4 border-green-600 bg-white rounded-r shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-gray-900">
+                                              Ticket: <span className="text-blue-600">{assign.ticketName}</span>
+                                            </p>
+                                            <div className="mt-2 space-y-1 text-sm text-gray-700">
+                                              <p><span className="font-medium">Assigned By:</span> {assign.assignBy}</p>
+                                              <p><span className="font-medium">Assigned To:</span> {assign.assignTo}</p>
+                                              <p><span className="font-medium">Date:</span> {assign.createdOn}</p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500">No assign history found.</p>
+                                )}
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -736,7 +772,10 @@ const ShowTicketPage = () => {
                     onChange={(e) => {
                       const value = e.target.value;
                       if (value === 'select-10') handleSelectCountInModal(10);
+                      else if (value === 'select-20') handleSelectCountInModal(20);
                       else if (value === 'select-50') handleSelectCountInModal(50);
+                      else if (value === 'select-100') handleSelectCountInModal(100);
+                      else if (value === 'select-200') handleSelectCountInModal(200);
                       else if (value === 'select-all') handleSelectAllInModal();
                       else if (value === 'select-none') handleSelectNoneInModal();
                       // Reset dropdown to default
@@ -747,10 +786,11 @@ const ShowTicketPage = () => {
                   >
                     <option value="" disabled>Select Options</option>
                     <option value="select-10">Select 10</option>
+                    <option value="select-20">Select 20</option>
                     <option value="select-50">Select 50</option>
-                    <option value="select-all">
-                      {selectedTicketsInModal.size === getModalFilteredTickets().length && getModalFilteredTickets().length > 0 ? 'Deselect All' : 'Select All'}
-                    </option>
+                    <option value="select-100">Select 100</option>
+                    <option value="select-200">Select 200</option>
+                    <option value="select-all">Select All</option>
                     <option value="select-none">Select None</option>
                   </select>
                 </div>
