@@ -233,6 +233,7 @@ const AddCandidatePage = () => {
 
         toast.success("Candidate added successfully!");
         resetForm();
+        navigate("/home/candidate/show")
       } else {
         toast.error(res.data.message || "Failed to add candidate");
       }
