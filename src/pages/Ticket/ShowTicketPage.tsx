@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { X, ChevronDown, ChevronRight, Filter, ChevronLeft } from "lucide-react";
+import { ScrollToTop } from "../../component/ScrollToTop";
 
 const ShowTicketPage = () => {
   const [searchParams] = useSearchParams();
@@ -723,11 +724,11 @@ const ShowTicketPage = () => {
               </button>
             </div>
 
-            <div className="text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
-            </div>
+            
           </div>
         )}
+
+        <ScrollToTop />
 
         {/* Assignment Modal with Ticket Table */}
         {assignModal && (

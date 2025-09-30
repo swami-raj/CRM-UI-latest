@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { API_BASE } from "../../utils/api";
 import { X, ChevronLeft, ChevronRight, Download, RotateCcw } from "lucide-react";
+import { ScrollToTop } from "../../component/ScrollToTop";
 
 interface Candidate {
   id: number;
@@ -477,7 +478,7 @@ const ShowCandidatePage = () => {
   }
 
   return (
-    <div className="p-4 min-h-screen bg-gray-50">
+    <div className="p-4 min-h-screen bg-gray-50 mb-8">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Candidates</h1>
         
@@ -705,7 +706,7 @@ const ShowCandidatePage = () => {
         </div>
 
         {/* Scroll Controls - Positioned at bottom right */}
-        <div className="absolute right-16 mt-2 flex space-x-2 z-30">
+        <div className="absolute right-16 mt-2 my-8 flex space-x-2 z-30">
           <button
             onClick={scrollLeft}
             className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-lg"
@@ -720,9 +721,10 @@ const ShowCandidatePage = () => {
           >
             <ChevronRight className="w-5 h-5" />
           </button>
+          <ScrollToTop />
         </div>
       </div>
-
+      
       {/* Pagination Controls */}
       {entriesPerPage !== -1 && totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
@@ -806,11 +808,16 @@ const ShowCandidatePage = () => {
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </button>
+
+            
           </div>
 
           
         </div>
+        
       )}
+
+
 
       {/* Unified View/Edit Modal */}
       {viewModal && selectedCandidate && (
