@@ -17,7 +17,7 @@ const ShowTicketPage = () => {
   const [deleteModal, setDeleteModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [assignModal, setAssignModal] = useState(false);
-  const [expandedTickets, setExpandedTickets] = useState<Set<number>>(new Set());
+  const [expandedTicketId, setExpandedTicketId] = useState<number | null>(null);
   const [ticketLogHistory, setTicketLogHistory] = useState<{[key: number]: any[]}>({});
   const [ticketAssignHistory, setTicketAssignHistory] = useState<{[key: number]: any[]}>({});
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -259,13 +259,13 @@ const ShowTicketPage = () => {
   };
 
   const toggleRowExpansion = async (ticket: any) => {
-    const isExpanded = expandedTickets.has(ticket.id);
-    const newExpanded = new Set(expandedTickets);
-    
-    if (isExpanded) {
-      newExpanded.delete(ticket.id);
+    if (expandedTicketId === ticket.id) {
+      // clicking same ticket closes it
+      setExpandedTicketId(null);
     } else {
-      newExpanded.add(ticket.id);
+      setExpandedTicketId(ticket.id);
+  
+      // fetch histories only for the new expanded ticket
       if (!ticketLogHistory[ticket.id]) {
         await fetchLogHistory(ticket.id);
       }
@@ -273,9 +273,8 @@ const ShowTicketPage = () => {
         await fetchAssignHistory(ticket.id);
       }
     }
-    
-    setExpandedTickets(newExpanded);
   };
+  
 
   const handleEdit = (ticket: any) => {
     setEditForm({
@@ -681,20 +680,21 @@ const ShowTicketPage = () => {
                         </td>
                         <td className="p-2 border">
                           <button
-                            onClick={() => toggleRowExpansion(ticket)}
-                            className="text-blue-600 hover:text-blue-800 p-1"
-                          >
-                            {expandedTickets.has(ticket.id) ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                          </button>
+  onClick={() => toggleRowExpansion(ticket)}
+  className="text-blue-600 hover:text-blue-800 p-1"
+>
+  {expandedTicketId === ticket.id ? (
+    <ChevronDown className="w-4 h-4" />
+  ) : (
+    <ChevronRight className="w-4 h-4" />
+  )}
+</button>
+
                         </td>
                       </tr>
                       
                       {/* Expanded log history and assign history row */}
-                      {expandedTickets.has(ticket.id) && (
+                      {expandedTicketId === ticket.id && (
                         <tr key={`${ticket.id}-expanded`} className="bg-gray-50">
                           <td colSpan={8} className="p-0 border-b">
                             <div className="p-4 bg-blue-50">
